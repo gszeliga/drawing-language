@@ -1,10 +1,12 @@
 #lang racket
 
 (require "vectors.rkt")
-(provide frame-coord-map)
+(provide frame-coord-map make-frame)
 
 (define (make-frame origin edge1 edge2)
-  (hash "origin" origin "e1" edge1 "e2" edge2))
+  (make-immutable-hash (list  (cons "origin" origin)
+                              (cons "e1" edge1)
+                              (cons "e2" edge2))))
 
 (define (origin-frame frame)
   (hash-ref frame "origin"))

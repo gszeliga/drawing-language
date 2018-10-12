@@ -1,6 +1,6 @@
 #lang racket
 
-(provide add-vect scale-vect xcord-vect ycord-vect)
+(provide add-vect scale-vect xcord-vect ycord-vect sub-vect make-vect)
 
 (define (make-vect x y)
   (cons x y))
