@@ -5,9 +5,11 @@
 
 (require racket/draw)
 (require racket/gui/base)
+(require pict)
 
 (provide draw-line
          draw-rectangle
+         draw-image
          beside
          rotate90
          squash-inwards
@@ -46,6 +48,23 @@
             min-y
             (abs (xcord-vect dist))
             (abs (ycord-vect dist))))))
+
+(define (draw-image relative-path)
+  (lambda (frame)
+    (let* ([m (frame-coord-map frame)]
+           [new-start (m (make-vect 0.0 0.0))]
+           [new-end (m (make-vect 1.0 1.0))]
+           [dist (sub-vect new-end new-start)]
+           [image (pict->bitmap
+                   (scale-to-fit
+                    (bitmap relative-path)
+                    (abs (xcord-vect dist))
+                    (abs (ycord-vect dist))
+                    #:mode 'distort))])
+
+      (send (get-dc frame) draw-bitmap image
+            (xcord-vect new-start)
+            (ycord-vect new-start)))))
 
 (define (make-segment start end)
   (cons start end))

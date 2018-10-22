@@ -14,8 +14,12 @@
                 (make-vect 0.0 1.0)) frame)
 ))
 
+(define (some-image)
+  (lambda (frame)
+    ((draw-image "logo.png") frame)))
+
 (let ((draw (within-frame 500 500)))
-  (draw (corner-split (square-and-cross) 5))
+  (draw (corner-split (some-image) 6))
   ;; (draw (below
   ;;        (rotate90 (beside (square-and-cross) (square-and-cross)))
   ;;        (rotate90 (beside (square-and-cross) (square-and-cross)))
