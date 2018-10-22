@@ -3,14 +3,49 @@
 (require "frames.rkt")
 (require "vectors.rkt")
 
+(require racket/draw)
+(require racket/gui/base)
+
+(provide draw-line
+         draw-rectangle
+         beside
+         rotate90
+         squash-inwards
+         shrink-to-upper-right
+         below
+         flipped-pairs
+         right-split
+         up-split
+         corner-split)
+
 ;; Painters
 (define (draw-line start end)
   (lambda (frame)
-    (send frame draw-line start end)))
+    (let* ([m (frame-coord-map frame)]
+           [new-start (m start)]
+           [new-end (m end)])
+      (send (get-dc frame) draw-line
+            (xcord-vect new-start)
+            (ycord-vect new-start)
+            (xcord-vect new-end)
+            (ycord-vect new-end)))))
 
 (define (draw-rectangle start end)
   (lambda (frame)
-    (send frame draw-rectangle start end)))
+    (let* ([f (frame-coord-map frame)]
+           [coord-start (f start)]
+           [coord-end (f end)]
+           [dist (sub-vect coord-end coord-start)]
+           [min-x (min (xcord-vect coord-start)
+                       (xcord-vect coord-end))]
+           [min-y (min (ycord-vect coord-start)
+                       (ycord-vect coord-end))])
+      
+      (send (get-dc frame) draw-rectangle
+            min-x
+            min-y
+            (abs (xcord-vect dist))
+            (abs (ycord-vect dist))))))
 
 (define (make-segment start end)
   (cons start end))
@@ -37,15 +72,35 @@
     (let* ([m (frame-coord-map frame)]
            [new-origin (m origin)])
       (painter
-       (make-frame new-origin
+       (make-frame-ext new-origin
                    (sub-vect (m corner1) new-origin)
-                   (sub-vect (m corner2) new-origin))))))
+                   (sub-vect (m corner2) new-origin)
+                   (get-dc frame))))))
 
 (define (flip-vert painter)
   (transform-painter painter
                      (make-vect 0.0 1.0)
                      (make-vect 1.0 1.0)
                      (make-vect 0.0 0.0)))
+
+(define (below painter1 painter2)
+  (let* ([split-point (make-vect 0.0 0.5)]
+         [paint-bottom (transform-painter painter1
+                                          (make-vect 0.0 0.0)
+                                          (make-vect 1.0 0.0)
+                                          split-point)]
+         [paint-top (transform-painter painter2
+                                       split-point
+                                       (make-vect 1.0 0.5)
+                                       (make-vect 0.0 1.0))])
+
+    (lambda (frame)
+      (paint-top frame)
+      (paint-bottom frame))))
+
+(define (flipped-pairs painter)
+  (let ((painter2 (beside painter (flip-vert painter))))
+    (below painter2 painter2)))
 
 (define (shrink-to-upper-right painter)
   (transform-painter painter
@@ -56,6 +111,7 @@
 (define (rotate90 painter)
   (transform-painter painter
                      (make-vect 1.0 0.0)
+                     (make-vect 1.0 1.0)
                      (make-vect 0.0 0.0)))
 
 (define (squash-inwards painter)
@@ -77,3 +133,26 @@
     (lambda (frame)
       (paint-left frame)
       (paint-right frame))))
+
+(define (right-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (right-split painter (- n 1))))
+        (beside painter (below smaller smaller)))))
+
+(define (up-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (up-split painter (- n 1))))
+        (below painter (beside smaller smaller)))))
+
+(define (corner-split painter n)
+  (if (= n 0)
+      painter
+      (let* ([up (up-split painter (- n 1))]
+             [right (right-split painter (- n 1))]
+             [top-left (beside up up)]
+             [bottom-right (below right right)]
+             [corner (corner-split painter (- n 1))])
+        (beside (below painter top-left)
+                (below bottom-right corner)))))
