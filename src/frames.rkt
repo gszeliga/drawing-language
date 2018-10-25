@@ -1,7 +1,16 @@
 #lang racket
 
 (require "vectors.rkt")
-(provide frame-coord-map make-frame make-frame-ext get-dc)
+(provide frame-coord-map
+         make-frame
+         make-frame-ext
+         get-dc
+         origin-values
+         origin-frame
+         edge1-values
+         edge1-frame
+         edge2-values
+         edge2-frame)
 
 (define (make-frame origin edge1 edge2)
   (make-immutable-hash (list  (cons "origin" origin)
@@ -19,11 +28,26 @@
 (define (origin-frame frame)
   (hash-ref frame "origin"))
 
+(define (origin-values frame)
+  (let ((origin (origin-frame frame)))
+    (values (xcord-vect origin)
+            (ycord-vect origin))))
+
 (define (edge1-frame frame)
   (hash-ref frame "e1"))
 
+(define (edge1-values frame)
+  (let ((e1 (edge1-frame frame)))
+    (values (xcord-vect e1)
+            (ycord-vect e1))))
+
 (define (edge2-frame frame)
   (hash-ref frame "e2"))
+
+(define (edge2-values frame)
+  (let ((e2 (edge2-frame frame)))
+    (values (xcord-vect e2)
+            (ycord-vect e2))))
 
 (define (frame-coord-map frame)
   ;; Origin(frame) + x * Edge1(frame) + y * Edge2(frame)

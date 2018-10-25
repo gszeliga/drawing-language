@@ -19,10 +19,4 @@
     ((draw-image "logo.png") frame)))
 
 (let ((draw (within-frame 500 500)))
-  (draw (corner-split (some-image) 6))
-  ;; (draw (below
-  ;;        (rotate90 (beside (square-and-cross) (square-and-cross)))
-  ;;        (rotate90 (beside (square-and-cross) (square-and-cross)))
-  ;;        ))
-
-  )
+  (draw (rotate90 (corner-split (some-image) 6)))  )

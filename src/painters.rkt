@@ -18,7 +18,8 @@
          flipped-pairs
          right-split
          up-split
-         corner-split)
+         corner-split
+         thetas)
 
 ;; Painters
 (define (draw-line start end)
@@ -49,22 +50,42 @@
             (abs (xcord-vect dist))
             (abs (ycord-vect dist))))))
 
+(define (thetas frame)
+  (let*-values ([(ox oy)   (origin-values frame)]
+                [(e1x e1y) (edge1-values frame)]
+                [(e2x e2y) (edge2-values frame)])
+
+    ;; (displayln (origin-frame frame))
+    ;; (displayln (edge1-frame frame))
+    ;; (displayln (edge2-frame frame))
+    
+    (cond
+      [(< e2x 0) (* pi 0.5)]
+      [(< e1x 0) pi]
+      [(< e1y 0) (* pi 1.5)]
+      [else (* pi 2)])))
+
 (define (draw-image relative-path)
   (lambda (frame)
     (let* ([m (frame-coord-map frame)]
-           [new-start (m (make-vect 0.0 0.0))]
-           [new-end (m (make-vect 1.0 1.0))]
-           [dist (sub-vect new-end new-start)]
+           [coord-start (m (make-vect 0.0 0.0))]
+           [coord-end (m (make-vect 1.0 1.0))]
+           [dist (sub-vect coord-end coord-start)]
+           [min-x (min (xcord-vect coord-start)
+                       (xcord-vect coord-end))]
+           [min-y (min (ycord-vect coord-start)
+                       (ycord-vect coord-end))]           
+           [picture (rotate
+                     (bitmap relative-path)
+                     (thetas frame))]
            [image (pict->bitmap
                    (scale-to-fit
-                    (bitmap relative-path)
+                    picture
                     (abs (xcord-vect dist))
                     (abs (ycord-vect dist))
                     #:mode 'distort))])
 
-      (send (get-dc frame) draw-bitmap image
-            (xcord-vect new-start)
-            (ycord-vect new-start)))))
+      (send (get-dc frame) draw-bitmap image min-x min-y))))
 
 (define (make-segment start end)
   (cons start end))
